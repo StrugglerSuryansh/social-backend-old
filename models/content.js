@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const ContentSchema = new mongoose.Schema({
-  text: String,
+  text: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  scheduledFor: Date,
-  postedAt: Date,
+  scheduledFor: { type: Date, required: true },
+  postedAt: Date, // Will store the time when the post was published
+  platforms: [String], // Platforms like ['twitter', 'facebook']
   engagement: {
     likes: Number,
     shares: Number,

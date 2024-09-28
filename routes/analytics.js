@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Content = require('../models/content');
 
+//get all the anaytics
 router.get('/', async (req, res) => {
   try {
     // Count the total number of posts
@@ -40,5 +41,38 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Error fetching analytics' });
   }
 });
+
+//summary route
+router.get('/summary', async (req, res) => {
+  try {
+    // Example analytics: total contents, most popular content, average engagement
+    const totalContents = await Content.countDocuments(); // Get total number of content
+    const mostPopularContent = await Content.findOne().sort({ engagement: -1 }).exec(); // Find content with highest engagement (sort by engagement)
+    
+    // Get average engagement across all content
+    const averageEngagementResult = await Content.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgEngagement: { $avg: "$engagement" } // Assuming there's an 'engagement' field in your Content model
+        }
+      }
+    ]);
+
+    const averageEngagement = averageEngagementResult[0]?.avgEngagement || 0; // Handle empty content case
+
+    // Respond with the analytics summary
+    res.json({
+      totalContents,
+      mostPopularContent,
+      averageEngagement
+    });
+
+  } catch (error) {
+    console.error('Error fetching analytics summary:', error);
+    res.status(500).json({ error: 'Error fetching analytics summary' });
+  }
+});
+
 
 module.exports = router;

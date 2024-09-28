@@ -3,6 +3,7 @@ const router = express.Router();
 const Content = require('../models/content');
 const { generateAIContent } = require("../services/aiservices");
 
+// POST /api/content/generate: Generate new content
 router.post('/generate', async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -35,6 +36,20 @@ router.post('/generate', async (req, res) => {
   } catch (error) {
     console.error(error); // Log the error for debugging
     res.status(500).json({ error: 'Error generating content' });
+  }
+});
+
+// GET /api/content: Retrieve all content
+router.get('/', async (req, res) => {
+  try {
+    // Retrieve all content from the database
+    const contents = await Content.find();
+
+    // Return all contents
+    res.json(contents);
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: 'Error retrieving content' });
   }
 });
 
