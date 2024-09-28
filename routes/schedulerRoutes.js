@@ -4,6 +4,24 @@ const Content = require('../models/content');
 const cron = require('node-cron'); // Job scheduler
 const { postToTwitter } = require('../services/twitterService'); // Import Twitter service
 
+// Helper function to parse "dd-mm-yyyy" into a Date object
+function parseDateString(dateString) {
+  const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
+  const match = dateString.match(regex);
+  
+  if (match) {
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10) - 1; // Months are 0-based in JavaScript
+    const year = parseInt(match[3], 10);
+    
+    // Create and return a Date object
+    return new Date(year, month, day);
+  }
+
+  // Return null if the date format is invalid
+  return null;
+}
+
 // POST /api/scheduler/schedule: Schedule a post
 router.post('/schedule', async (req, res) => {
   try {
@@ -14,6 +32,12 @@ router.post('/schedule', async (req, res) => {
       return res.status(400).json({ error: 'Content ID, scheduled date, and platforms are required' });
     }
 
+    // Parse and validate the scheduledFor date (in dd-mm-yyyy format)
+    const postDate = parseDateString(scheduledFor);
+    if (!postDate || isNaN(postDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format. Use dd-mm-yyyy.' });
+    }
+
     // Find content by its ID
     const content = await Content.findById(contentId);
     if (!content) {
@@ -21,18 +45,15 @@ router.post('/schedule', async (req, res) => {
     }
 
     // Update content with scheduling info
-    content.scheduledFor = new Date(scheduledFor);
+    content.scheduledFor = postDate;
     content.platforms = platforms; // Platforms like ['twitter', 'facebook']
     await content.save();
 
-    // Schedule post for future using node-cron
-    const postDate = new Date(scheduledFor);
     const currentDate = new Date();
 
     if (postDate > currentDate) {
       // Schedule for the future using node-cron
       const cronTime = `${postDate.getMinutes()} ${postDate.getHours()} ${postDate.getDate()} ${postDate.getMonth() + 1} *`;
-
       cron.schedule(cronTime, async () => {
         // Post to each platform
         await postToPlatforms(content);
