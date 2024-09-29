@@ -6,12 +6,13 @@ const analyticsRoutes = require('./routes/analytics');
 const schedulerRoutes = require('./routes/schedulerRoutes');
 const cronJob = require('./cronJob'); // Import the cron job to start it
 const cors = require("cors");
-app.use(cors());
+
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(cors());
 
 // Routes
 app.use('/api/content', contentRoutes);
